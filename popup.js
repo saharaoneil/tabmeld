@@ -1,8 +1,10 @@
-// On load, get all tabs and display them
+let allTabs = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   chrome.runtime.sendMessage({action: 'getTabs'}, (response) => {
     if (response && response.tabs) {
-      displayTabs(response.tabs);
+      allTabs = response.tabs;
+      displayTabs(allTabs);
     }
   });
 });
@@ -16,7 +18,7 @@ function displayTabs(tabs) {
     return;
   }
   
-  status.textContent = `${tabs.length} tabs extracted`;
+  status.textContent = tabs.length + ' tabs extracted';
   tabList.innerHTML = '';
   
   tabs.forEach((tab, index) => {
@@ -44,7 +46,61 @@ function displayTabs(tabs) {
   });
 }
 
-// Button click handler
-document.getElementById('extract-btn').addEventListener('click', () => {
-  alert('Next: synthesis coming soon!');
+document.getElementById('synthesize-btn').addEventListener('click', () => {
+  const checkboxes = document.querySelectorAll('#tab-list input[type="checkbox"]:checked');
+  const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
+  const selectedTabs = selectedIndices.map(i => allTabs[i]);
+  
+  if (selectedTabs.length === 0) {
+    alert('Please select at least one tab');
+    return;
+  }
+  
+  const mode = document.getElementById('mode-select').value;
+  
+  document.getElementById('synthesize-btn').disabled = true;
+  document.getElementById('synthesize-btn').textContent = 'Synthesizing...';
+  
+  chrome.runtime.sendMessage({
+    action: 'synthesize',
+    selectedTabs: selectedTabs,
+    mode: mode
+  }, (response) => {
+    document.getElementById('synthesize-btn').disabled = false;
+    document.getElementById('synthesize-btn').textContent = 'Synthesize Selected Tabs';
+    
+    if (response.result.success) {
+      displayResult(response.result);
+    } else {
+      alert('Error: ' + response.result.error);
+    }
+  });
 });
+
+function displayResult(result) {
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = '';
+  
+  if (result.themes) {
+    const themesDiv = document.createElement('div');
+    themesDiv.className = 'result-section';
+    themesDiv.innerHTML = '<div class="result-title">Detected Themes</div><div class="result-content">' + result.themes + '</div>';
+    resultDiv.appendChild(themesDiv);
+  }
+  
+  if (result.quotes) {
+    const quotesDiv = document.createElement('div');
+    quotesDiv.className = 'result-section';
+    quotesDiv.innerHTML = '<div class="result-title">Key Quotes</div><div class="result-content">' + result.quotes + '</div>';
+    resultDiv.appendChild(quotesDiv);
+  }
+  
+  if (result.memo) {
+    const memoDiv = document.createElement('div');
+    memoDiv.className = 'result-section';
+    memoDiv.innerHTML = '<div class="result-title">Full Memo</div><div class="result-content">' + result.memo + '</div>';
+    resultDiv.appendChild(memoDiv);
+  }
+  
+  resultDiv.style.display = 'block';
+}
