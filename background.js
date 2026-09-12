@@ -101,8 +101,8 @@ async function synthesizeWithClaude(selectedTabs, mode) {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-5',
-        max_tokens: 8000,
+        model: 'claude-sonnet-5',
+        max_tokens: 5000,
         messages: [{role: 'user', content: prompt}]
       })
     });

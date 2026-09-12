@@ -59,7 +59,7 @@ document.getElementById('synthesize-btn').addEventListener('click', () => {
   const mode = document.getElementById('mode-select').value;
   
   document.getElementById('synthesize-btn').disabled = true;
-  document.getElementById('synthesize-btn').textContent = 'Synthesizing...';
+  document.getElementById('synthesize-btn').textContent = '⏳ Synthesizing (this takes ~20-30 sec)...';
   
   chrome.runtime.sendMessage({
     action: 'synthesize',
@@ -84,23 +84,43 @@ function displayResult(result) {
   if (result.themes) {
     const themesDiv = document.createElement('div');
     themesDiv.className = 'result-section';
-    themesDiv.innerHTML = '<div class="result-title">Detected Themes</div><div class="result-content">' + result.themes + '</div>';
+    themesDiv.innerHTML = '<div class="result-title">🔍 Themes</div><div class="result-content">' + escapeHtml(result.themes) + '</div>';
     resultDiv.appendChild(themesDiv);
   }
   
   if (result.quotes) {
     const quotesDiv = document.createElement('div');
     quotesDiv.className = 'result-section';
-    quotesDiv.innerHTML = '<div class="result-title">Key Quotes</div><div class="result-content">' + result.quotes + '</div>';
+    quotesDiv.innerHTML = '<div class="result-title">💬 Key Quotes</div><div class="result-content">' + escapeHtml(result.quotes) + '</div>';
     resultDiv.appendChild(quotesDiv);
   }
   
   if (result.memo) {
     const memoDiv = document.createElement('div');
     memoDiv.className = 'result-section';
-    memoDiv.innerHTML = '<div class="result-title">Full Memo</div><div class="result-content">' + result.memo + '</div>';
+    memoDiv.innerHTML = '<div class="result-title">📄 Synthesis</div><div class="result-content">' + escapeHtml(result.memo) + '</div>';
     resultDiv.appendChild(memoDiv);
+    
+    // Add copy button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = '📋 Copy Memo';
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(result.memo).then(() => {
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = '📋 Copy Memo';
+        }, 2000);
+      });
+    });
+    resultDiv.appendChild(copyBtn);
   }
   
   resultDiv.style.display = 'block';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }

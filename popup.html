@@ -2,44 +2,30 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    body { font-family: sans-serif; width: 450px; padding: 15px; margin: 0; }
-    h2 { margin: 0 0 15px 0; font-size: 18px; }
-    .mode-selector { margin-bottom: 15px; }
-    .mode-selector label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 12px; }
-    select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-    #tab-list { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
-    .tab-item { padding: 8px; margin: 5px 0; border: 1px solid #e0e0e0; border-radius: 4px; }
-    .tab-item input { margin-right: 8px; }
-    .tab-title { font-weight: bold; font-size: 12px; }
-    .tab-text { font-size: 11px; color: #666; margin: 3px 0; max-height: 40px; overflow: hidden; }
-    button { padding: 10px 15px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; }
-    button:hover { background: #0052a3; }
-    #status { font-size: 12px; color: #999; margin: 10px 0; }
-    #result { margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; max-height: 300px; overflow-y: auto; display: none; }
-    .result-section { margin-bottom: 10px; }
-    .result-title { font-weight: bold; font-size: 12px; color: #0066cc; }
-    .result-content { font-size: 11px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-  </style>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h2>📑 TabMeld</h2>
+  <header>
+    <h2>📑 TabMeld</h2>
+  </header>
   
-  <div class="mode-selector">
-    <label>Synthesis Mode:</label>
-    <select id="mode-select">
-      <option value="research">📋 Research Memo</option>
-      <option value="competitive">🎯 Competitive Analysis</option>
-      <option value="meeting">💼 Meeting Prep</option>
-    </select>
+  <div class="container">
+    <div class="mode-selector">
+      <label>Synthesis Mode</label>
+      <select id="mode-select">
+        <option value="research">📋 Research Memo</option>
+        <option value="competitive">🎯 Competitive Analysis</option>
+        <option value="meeting">💼 Meeting Prep</option>
+      </select>
+    </div>
+    
+    <p id="status">Loading tabs...</p>
+    <div id="tab-list"></div>
+    
+    <button id="synthesize-btn">Synthesize Selected Tabs</button>
+    
+    <div id="result"></div>
   </div>
-  
-  <p id="status">Loading tabs...</p>
-  <div id="tab-list"></div>
-  
-  <button id="synthesize-btn">Synthesize Selected Tabs</button>
-  
-  <div id="result"></div>
   
   <script src="popup.js"></script>
 </body>
