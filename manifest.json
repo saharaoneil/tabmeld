@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "TabMeld",
+  "version": "1.0",
+  "description": "Synthesize your research tabs into insights",
+  
+  "permissions": ["tabs", "scripting", "storage", "downloads"],
+  "host_permissions": ["<all_urls>"],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TabMeld"
+  }
+}
