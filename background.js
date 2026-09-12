@@ -1,7 +1,16 @@
 // Get API key from config
 async function getClaudeApiKey() {
-  if (typeof CONFIG !== 'undefined' && CONFIG.claudeApiKey) {
-    return CONFIG.claudeApiKey;
+  try {
+    const response = await fetch(chrome.runtime.getURL('config.js'));
+    const text = await response.text();
+    
+    // Extract the API key using regex
+    const match = text.match(/claudeApiKey:\s*['"]([^'"]+)['"]/);
+    if (match && match[1]) {
+      return match[1];
+    }
+  } catch (err) {
+    console.error('Failed to load config:', err);
   }
   throw new Error('API key not configured in config.js');
 }
@@ -26,18 +35,33 @@ async function extractAllTabs() {
   const tabs = await chrome.tabs.query({currentWindow: true});
   const results = [];
   
+  console.log('Found ' + tabs.length + ' total tabs');
+  
   for (const tab of tabs) {
-    if (tab.url.startsWith('chrome://') || tab.url.startsWith('about:')) {
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('about:') || tab.url.startsWith('edge://')) {
+      console.log('Skipping system tab: ' + tab.url);
       continue;
     }
     
     try {
+      console.log('Extracting from tab ' + tab.id + ': ' + tab.title);
+      
+      // Inject content script and extract text
       const injectionResults = await chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        function: extractTextFromPage
+        target: {tabId: tab.id, allFrames: true},
+        files: ['content-script.js']
       });
       
-      const text = injectionResults[0].result;
+      // Now send message to the injected script
+      const response = await chrome.tabs.sendMessage(tab.id, {action: 'extractText'});
+      
+      if (!response || !response.text) {
+        console.warn('No text in response from tab ' + tab.id);
+        continue;
+      }
+      
+      const text = response.text;
+      console.log('Successfully extracted ' + text.length + ' chars from ' + tab.title);
       
       results.push({
         id: tab.id,
@@ -46,10 +70,11 @@ async function extractAllTabs() {
         text: text
       });
     } catch (err) {
-      console.log('Could not extract from ' + tab.url);
+      console.error('Error extracting from tab ' + tab.id + ' (' + tab.url + '): ' + err.message);
     }
   }
   
+  console.log('Total tabs extracted: ' + results.length);
   return results;
 }
 
@@ -77,7 +102,7 @@ async function synthesizeWithClaude(selectedTabs, mode) {
       },
       body: JSON.stringify({
         model: 'claude-opus-5',
-        max_tokens: 4000,
+        max_tokens: 8000,
         messages: [{role: 'user', content: prompt}]
       })
     });
@@ -99,9 +124,23 @@ async function synthesizeWithClaude(selectedTabs, mode) {
     const fullText = textBlock.text;
     console.log('Claude memo:', fullText);
     
+    // Parse themes section - capture all lines that start with ### Theme
+    let themes = '';
+    const themeLines = fullText.match(/^###\s+Theme\s+\d+.*$/gm);
+    if (themeLines && themeLines.length > 0) {
+      themes = themeLines.slice(0, 5).join('\n\n'); // Show first 5 themes
+    }
+    
+    // Extract all block quotes as key quotes
+    let quotes = '';
+    const quoteMatches = fullText.match(/^>\s+(.+?)(?=\n(?:[^>]|$))/gm);
+    if (quoteMatches && quoteMatches.length > 0) {
+      quotes = quoteMatches.map(q => q.replace(/^>\s+/, '')).join('\n\n');
+    }
+    
     return {
-      themes: 'Detected from research',
-      quotes: 'Key points extracted',
+      themes: themes || 'Themes detected in synthesis',
+      quotes: quotes || 'Key quotes extracted from synthesis',
       memo: fullText,
       success: true
     };
